@@ -1,197 +1,451 @@
-import { PrimaryButton, SecondaryButton } from "@/components";
 import { useDBUser } from "../context/UserContext";
-import { BsFillTrash3Fill, BsPen } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { TfiWrite } from "react-icons/tfi";
 import { axiosInstance } from "../utils/axios";
 import { auth } from "../firebase/firebase";
 import { toast } from "react-hot-toast";
 import dayjs from "dayjs";
-import AlertModal from "@/components/reuseit/AlertModal";
+import { FiCalendar, FiClock, FiEdit2, FiTrash2, FiChevronDown, FiChevronUp } from "react-icons/fi";
+import { SyncLoader } from "react-spinners";
 
-import banner from "@/assets/profileBackground1.png";
+// Types
+interface TimeSlot {
+  id: string;
+  timeStart: string;
+  timeEnd: string;
+  type: string;
+  subject?: string;
+  faculty?: string;
+  room?: string;
+  batch: string;
+  sessions?: Array<{
+    batch: string;
+    subject: string;
+    faculty?: string;
+    room?: string;
+  }>;
+}
+
+interface DaySchedule {
+  id: string;
+  day: string;
+  slots: TimeSlot[];
+}
+
+interface Subject {
+  id: string;
+  name: string;
+  type: string;
+  classesPerWeek: number;
+  totalExpected: number;
+  attended: number;
+  totalHeld: number;
+}
+
+interface Timetable {
+  id: string;
+  program: string;
+  semester: string;
+  effectiveDate: string;
+  totalWeeks: number;
+  completedWeeks: number;
+  minAttendance: number;
+  userBatch: string;
+  documentUrl: string;
+  schedule: DaySchedule[];
+  subjects: Subject[];
+  createdAt: string;
+}
 
 const Profile = () => {
   const navigate = useNavigate();
   const { dbUser, setDbUser } = useDBUser();
-  const [disabled, setDisabled] = useState(false);
-  const [isDeleteProfileModalOpen, setIsDeleteProfileModalOpen] =
-    useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  // Set window title.
+  const [timetable, setTimetable] = useState<Timetable | null>(null);
+  const [isLoadingTimetable, setIsLoadingTimetable] = useState(true);
+  const [showSchedule, setShowSchedule] = useState(false);
+
   useEffect(() => {
-    document.title = `${dbUser?.name} | Quizzer AI`;
+    document.title = `${dbUser?.name || "Profile"} | Smart Attendance`;
   }, [dbUser]);
 
-  // Scroll to top
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  // Delete the user
-  const deleteUser = () => {
-    setDisabled(true);
+  useEffect(() => {
+    const fetchTimetable = async () => {
+      if (!dbUser?.id) {
+        setIsLoadingTimetable(false);
+        return;
+      }
+
+      try {
+        const response = await axiosInstance.post("/timetable", {
+          userId: dbUser.id,
+        });
+        setTimetable(response.data.timetable);
+      } catch {
+        setTimetable(null);
+      } finally {
+        setIsLoadingTimetable(false);
+      }
+    };
+
+    if (dbUser?.id) {
+      fetchTimetable();
+    }
+  }, [dbUser?.id]);
+
+  const deleteUser = async () => {
+    setIsDeleting(true);
     const user = auth.currentUser;
 
-    user
-      ?.delete()
-      ?.then(() => {
-        axiosInstance
-          .post("/user/delete-user", { userId: dbUser?.id })
-          .then(() => {
-            toast.success("User Deleted.");
-            setDbUser(null);
-            setDisabled(false);
-            setIsDeleteProfileModalOpen(false);
-            navigate("/");
-          })
-          .catch((err) => {
-            setDisabled(false);
-            setIsDeleteProfileModalOpen(false);
-            console.log(err);
-            toast.error("Something went wrong.");
-          });
-      })
-      .catch((error) => {
-        setDisabled(false);
-        console.log(error);
-        setIsDeleteProfileModalOpen(false);
-        const errorMessage = error?.message;
-        if (String(errorMessage).includes("auth/requires-recent-login")) {
-          toast.error("Please login again before deleting your account.");
-        } else {
-          toast.error("Something went wrong.");
-        }
-      });
+    try {
+      await user?.delete();
+      await axiosInstance.post("/user/delete-user", { userId: dbUser?.id });
+      toast.success("Account deleted");
+      setDbUser(null);
+      navigate("/");
+    } catch (error: unknown) {
+      const err = error as { message?: string };
+      if (String(err?.message).includes("auth/requires-recent-login")) {
+        toast.error("Please login again before deleting");
+      } else {
+        toast.error("Something went wrong");
+      }
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+    }
   };
 
+  const dayOrder = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+  ];
+
+  const sortedSchedule = timetable?.schedule?.sort(
+    (a, b) => dayOrder.indexOf(a.day) - dayOrder.indexOf(b.day)
+  );
+
+  // Calculate total attendance
+  const totalAttended = timetable?.subjects?.reduce((acc, sub) => acc + sub.attended, 0) || 0;
+  const totalHeld = timetable?.subjects?.reduce((acc, sub) => acc + sub.totalHeld, 0) || 0;
+  const totalPercentage = totalHeld > 0 ? Math.round((totalAttended / totalHeld) * 100) : 0;
+  const isAtRisk = totalPercentage < (timetable?.minAttendance || 75);
+
   return (
-    <>
-      {/* Delete Account Modal */}
-      <AlertModal
-        isOpen={isDeleteProfileModalOpen}
-        className="max-w-xl"
-        onClose={() => setIsDeleteProfileModalOpen(false)}
-      >
-        <div className="flex flex-col gap-y-2">
-          {/* Title */}
-          <h1 className="dark:text-darkmodetext font-bold text-2xl">
-            Are you sure you want to delete your account?
-          </h1>
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 py-8 px-6">
+      <div className="max-w-2xl mx-auto">
+        {/* Profile Header */}
+        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 mb-6">
+          <div className="flex items-start gap-4">
+            {/* Avatar */}
+            <div className="flex-shrink-0">
+              {dbUser?.photoURL ? (
+                <img
+                  src={dbUser.photoURL}
+                  alt={dbUser.name}
+                  className="w-16 h-16 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                  <span className="text-xl font-medium text-zinc-400">
+                    {dbUser?.name?.charAt(0) || "?"}
+                  </span>
+                </div>
+              )}
+            </div>
 
-          {/* Subtitle */}
-          <h2 className="dark:text-darkmodetext mt-1 text-sm text-darkbg/70">
-            This action cannot be reversed. Deleting your account will remove
-            all your teams and leagues.
-          </h2>
+            {/* Info */}
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+                {dbUser?.name}
+              </h1>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 truncate">
+                {dbUser?.email}
+              </p>
+              <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-2">
+                Joined {dayjs(dbUser?.createdAt).format("MMM D, YYYY")}
+              </p>
+            </div>
 
-          {/* Buttons */}
-          <div className="mt-5 flex gap-x-5 justify-end">
-            <PrimaryButton
-              className="text-sm bg-red-500 border-red-500 hover:bg-red-600 hover:border-red-600"
-              onClick={deleteUser}
-              disabled={disabled}
-              disabledText="Please Wait..."
-              text="Delete"
-            />
-            <SecondaryButton
-              className="text-sm"
-              disabled={disabled}
-              disabledText="Please Wait..."
-              onClick={() => setIsDeleteProfileModalOpen(false)}
-              text="Cancel"
-            />
+            {/* Actions */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => navigate("/edit-profile")}
+                className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+                title="Edit profile"
+              >
+                <FiEdit2 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="p-2 text-zinc-400 hover:text-red-500 transition-colors"
+                title="Delete account"
+              >
+                <FiTrash2 className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
-      </AlertModal>
 
-      {/* Main */}
-      <div className="lg:min-h-screen bg-bgwhite dark:bg-darkbg dark:text-darkmodetext w-full pb-20">
-        {/* Background color div */}
-        <div className="bg-secondarydarkbg overflow-hidden dark:bg-darkgrey border-b-4 border-black h-48 dark:border-white/10">
-          <img src={banner} className="object-cover" />
-        </div>
-
-        {/* Profile Info Div */}
-        <div className="bg-white dark:bg-secondarydarkbg dark:border-white/25 shadow-xl -translate-y-14 border-2 min-h-52 pt-20 pb-10 rounded-lg mx-5 md:mx-10 lg:mx-20">
-          {/* Floating Image */}
-          <div className="absolute w-full -top-18 flex justify-center">
-            {dbUser?.photoURL ? (
-              <img
-                src={dbUser?.photoURL}
-                className="bg-white  rounded-full h-36 w-36 border-8 border-white dark:border-secondarydarkbg dark:border-darkgrey pointer-events-none"
-              />
-            ) : (
-              <img
-                src={
-                  "https://res.cloudinary.com/do8rpl9l4/image/upload/v1740987081/accountcircle_axsjlm.png"
-                }
-                className="bg-secondarydarkbg rounded-full h-36 w-36 border-8 border-white dark:border-secondarydarkbg dark:border-darkgrey pointer-events-none"
-              />
-            )}
-          </div>
-
-          {/* Edit & delete icon on small screen */}
-          <div className="lg:hidden absolute flex gap-x-4 right-6 top-5">
-            <BsPen
-              className="text-xl hover:text-cta dark:hover:text-darkmodeCTA transition-all cursor-pointer"
-              onClick={() => navigate("/edit-profile")}
-            />
-            <button
-              onClick={() => setIsDeleteProfileModalOpen(true)}
-              className="text-xl  cursor-pointer"
-            >
-              <BsFillTrash3Fill className=" cursor-pointer text-red-500" />
-            </button>
-          </div>
-
-          {/* Edit & delete button on large screen */}
-          <div className="hidden absolute lg:flex gap-x-4 right-6 top-5">
-            <SecondaryButton
-              text={
-                <div className="flex items-center gap-x-2">
-                  <BsPen />
-                  <p>Edit</p>
-                </div>
-              }
-              className="border-transparent dark:hover:!text-cta shadow-md"
-              onClick={() => navigate("/edit-profile")}
-            />
-            <SecondaryButton
-              text={
-                <div className="flex justify-center items-center  gap-x-2">
-                  <BsFillTrash3Fill className=" cursor-pointer " />
-                  Delete
-                </div>
-              }
-              onClick={() => setIsDeleteProfileModalOpen(true)}
-              className="border-transparent dark:!border-2 shadow-md hover:bg-red-600 text-red-600 dark:text-white hover:!text-white dark:hover:!text-red-600"
-            />
-          </div>
-
-          {/* Name, Username and Bio + Stat Count */}
-          <div className="px-2">
-            <p className="text-center text-3xl font-bold">{dbUser?.name}</p>
-            <p className="mt-2 text-center text-xl font-medium">
-              @{dbUser?.username}
+        {/* Delete Confirmation */}
+        {showDeleteConfirm && (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-5 mb-6">
+            <h3 className="font-medium text-red-800 dark:text-red-200 mb-2">
+              Delete Account?
+            </h3>
+            <p className="text-sm text-red-600 dark:text-red-300 mb-4">
+              This will permanently delete your account and all data.
             </p>
-            {dbUser?.bio && (
-              <p className="px-4 my-10 text-md text-center">{dbUser?.bio}</p>
+            <div className="flex gap-2">
+              <button
+                onClick={deleteUser}
+                disabled={isDeleting}
+                className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 disabled:opacity-50"
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </button>
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="px-4 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-300 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Timetable Section */}
+        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-medium text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+              <FiCalendar className="w-4 h-4 text-zinc-400" />
+              Timetable
+            </h2>
+            {timetable ? (
+              <div className="flex gap-4">
+                <button
+                  onClick={() => navigate("/edit-timetable")}
+                  className="text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 flex items-center gap-1"
+                >
+                  <FiEdit2 className="w-3.5 h-3.5" />
+                  Edit
+                </button>
+                <button
+                  onClick={() => navigate("/timetable")}
+                  className="text-sm text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-400"
+                >
+                  Re-upload →
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => navigate("/timetable")}
+                className="text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+              >
+                Upload →
+              </button>
             )}
           </div>
 
-          {/* Separator */}
-          <hr className="my-5 mx-2 dark:border-white/25" />
+          {isLoadingTimetable ? (
+            <div className="flex justify-center py-8">
+              <SyncLoader color="#71717a" size={8} />
+            </div>
+          ) : timetable ? (
+            <div className="space-y-4">
+              {/* Total Attendance Highlight */}
+              <div className={`rounded-xl p-4 border ${
+                isAtRisk 
+                ? "bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-900/50" 
+                : "bg-green-50 dark:bg-green-900/10 border-green-100 dark:border-green-900/50"
+              }`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${
+                      isAtRisk ? "text-red-500" : "text-green-500"
+                    }`}>Overall Attendance</p>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-black text-zinc-900 dark:text-zinc-100">{totalPercentage}%</span>
+                      <span className="text-xs text-zinc-500 dark:text-zinc-400">of {totalHeld} sessions</span>
+                    </div>
+                  </div>
+                  <div className={`text-xs font-bold px-2 py-1 rounded-full ${
+                    isAtRisk 
+                    ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300" 
+                    : "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                  }`}>
+                    {isAtRisk ? "Below Goal" : "On Track"}
+                  </div>
+                </div>
+                <div className="w-full h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full mt-4 overflow-hidden">
+                   <div 
+                     className={`h-full transition-all duration-1000 ${isAtRisk ? "bg-red-500" : "bg-green-500"}`}
+                     style={{ width: `${Math.min(100, totalPercentage)}%` }}
+                   />
+                </div>
+              </div>
 
-          {/* Day of joining */}
-          <div className="mt-5 text-greyText flex justify-center items-center gap-x-2">
-            <TfiWrite /> Became a Quizzer on{" "}
-            {dayjs(new Date(dbUser?.createdAt)).format("MMM DD, YYYY")}.
-          </div>
+              {/* Info Grid */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-3">
+                  <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">
+                    Program
+                  </p>
+                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                    {timetable.program}
+                  </p>
+                </div>
+                <div className="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-3">
+                  <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">
+                    Semester
+                  </p>
+                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                    {timetable.semester}
+                  </p>
+                </div>
+                <div className="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-3">
+                  <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">
+                    Weeks
+                  </p>
+                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                    {timetable.completedWeeks} / {timetable.totalWeeks}
+                  </p>
+                </div>
+                <div className="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-3">
+                  <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">
+                    Required
+                  </p>
+                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                    {timetable.minAttendance}%
+                  </p>
+                </div>
+              </div>
+
+              {/* Each Subject Breakdown */}
+              {timetable.subjects && timetable.subjects.length > 0 && (
+                <div className="space-y-3">
+                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Subject Breakdown</p>
+                  <div className="grid gap-2">
+                    {timetable.subjects.map((subject) => {
+                      const percentage = subject.totalHeld > 0 ? Math.round((subject.attended / subject.totalHeld) * 100) : 0;
+                      const isSubAtRisk = percentage < (timetable?.minAttendance || 75);
+                      
+                      return (
+                        <div 
+                          key={subject.id}
+                          className="bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800 rounded-xl p-3"
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="min-w-0 flex-1">
+                              <h4 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">{subject.name}</h4>
+                              <p className="text-[10px] text-zinc-500 dark:text-zinc-400 uppercase tracking-tighter">{subject.type}</p>
+                            </div>
+                            <div className="text-right ml-4">
+                              <span className={`text-sm font-black ${isSubAtRisk ? "text-red-500" : "text-zinc-900 dark:text-zinc-100"}`}>
+                                {percentage}%
+                              </span>
+                              <div className="text-[10px] text-zinc-400 font-medium">
+                                {subject.attended}/{subject.totalHeld}
+                              </div>
+                            </div>
+                          </div>
+                          {/* Mini Progress Bar */}
+                          <div className="w-full h-1 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+                            <div 
+                              className={`h-full transition-all duration-700 ${isSubAtRisk ? "bg-red-500" : "bg-green-500"}`}
+                              style={{ width: `${Math.min(100, percentage)}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Toggle Schedule */}
+              <button
+                onClick={() => setShowSchedule(!showSchedule)}
+                className="w-full py-2.5 text-sm text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 border border-dashed border-zinc-200 dark:border-zinc-700 rounded-lg flex items-center justify-center gap-2 transition-colors"
+              >
+                <FiClock className="w-4 h-4" />
+                {showSchedule ? "Hide" : "View"} Schedule
+                {showSchedule ? (
+                  <FiChevronUp className="w-4 h-4" />
+                ) : (
+                  <FiChevronDown className="w-4 h-4" />
+                )}
+              </button>
+
+              {/* Schedule */}
+              {showSchedule && sortedSchedule && (
+                <div className="space-y-3 pt-2">
+                  {sortedSchedule.map((day) => (
+                    <div
+                      key={day.id}
+                      className="border border-zinc-100 dark:border-zinc-800 rounded-lg overflow-hidden"
+                    >
+                      <div className="bg-zinc-50 dark:bg-zinc-800 px-3 py-2">
+                        <h4 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                          {day.day}
+                        </h4>
+                      </div>
+                      <div className="divide-y divide-zinc-50 dark:divide-zinc-800">
+                        {day.slots
+                          .sort((a, b) => a.timeStart.localeCompare(b.timeStart))
+                          .map((slot) => (
+                            <div
+                              key={slot.id}
+                              className="px-3 py-2 flex items-center justify-between"
+                            >
+                              <div>
+                                <p className="text-sm text-zinc-900 dark:text-zinc-100">
+                                  {slot.subject || slot.type}
+                                </p>
+                                <p className="text-xs text-zinc-400 dark:text-zinc-500">
+                                  {slot.timeStart} – {slot.timeEnd}
+                                  {slot.room && ` · ${slot.room}`}
+                                </p>
+                              </div>
+                              <span className="text-xs text-zinc-400 dark:text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded">
+                                {slot.type}
+                              </span>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <FiCalendar className="w-8 h-8 mx-auto text-zinc-200 dark:text-zinc-700 mb-3" />
+              <p className="text-sm text-zinc-400 dark:text-zinc-500 mb-3">
+                No timetable uploaded
+              </p>
+              <button
+                onClick={() => navigate("/timetable")}
+                className="text-sm font-medium text-zinc-900 dark:text-zinc-100 hover:underline"
+              >
+                Upload now →
+              </button>
+            </div>
+          )}
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

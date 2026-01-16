@@ -140,17 +140,17 @@ const Navbar = () => {
       <nav
         className={`dark:bg-darkbg relative z-2 flex items-center justify-between bg-whitebg px-10 py-3 font-title dark:text-white`}
       >
-        {/* Quizzer AI */}
+        {/* Safezone */}
         <Link to="/" aria-label="Home" className="flex gap-x-2 items-center">
           <img
             src={
-              "https://res.cloudinary.com/do8rpl9l4/image/upload/v1736427090/quiz_imfkoz.png"
+              "https://res.cloudinary.com/dvwdsxirc/image/upload/v1768573368/logo_ykew3c.png"
             }
-            alt="Quizzer AI"
+            alt="Safezone"
             className="h-10 pointer-events-none"
           />
           <p className="hidden md:block font-black dark:text-darkmodetext  bg-gradient-to-t text-transparent tracking-wider bg-clip-text from-cta to-hovercta text-4xl">
-            Quizzer AI
+            Safezone
           </p>
         </Link>
 
@@ -167,49 +167,17 @@ const Navbar = () => {
           {dbUser ? (
             <>
               <Link
-                to="/notes"
+                to="/attendance"
                 className="hover:text-cta dark:hover:text-darkmodeCTA transition-all"
               >
-                Notes
+                Attendance
               </Link>
               <Link
-                to="/files"
+                to="/profile"
                 className="hover:text-cta dark:hover:text-darkmodeCTA transition-all"
               >
-                Files
+                Timetable
               </Link>
-              {/* Pop-out menu to display quiz links */}
-              <NavigationMenu>
-                <NavigationMenuList>
-                  <NavigationMenuItem>
-                    <NavigationMenuTrigger className="text-2xl font-semibold ">
-                      Quizzes
-                    </NavigationMenuTrigger>
-                    <NavigationMenuContent className="p-2 px-4">
-                      <ListItem
-                        to="/quizzes"
-                        title="Your Quizzes"
-                        className="!text-2xl font-semibold text-center hover:text-cta dark:hover:text-darkmodeCTA transition-all"
-                      ></ListItem>
-                      <ListItem
-                        to="/flashcard"
-                        title="FlashCard"
-                        className="!text-2xl font-semibold text-center hover:text-cta dark:hover:text-darkmodeCTA transition-all"
-                      ></ListItem>
-                      <ListItem
-                        to="/mcq"
-                        title="MCQ"
-                        className="!text-2xl font-semibold text-center hover:text-cta dark:hover:text-darkmodeCTA transition-all"
-                      ></ListItem>
-                      <ListItem
-                        to="/fact-or-not"
-                        title="Fact or Not"
-                        className="!text-2xl font-semibold text-center hover:text-cta dark:hover:text-darkmodeCTA transition-all"
-                      ></ListItem>
-                    </NavigationMenuContent>
-                  </NavigationMenuItem>
-                </NavigationMenuList>
-              </NavigationMenu>
               <button
                 onClick={() => setIsSignOutModalOpen(true)}
                 className="cursor-pointer hover:text-cta dark:hover:text-darkmodeCTA transition-all"
@@ -238,14 +206,6 @@ const Navbar = () => {
               )}
             </>
           )}
-
-          {/* FAQ Page */}
-          <Link
-            to="/faq"
-            className="hover:text-cta dark:hover:text-darkmodeCTA transition-all"
-          >
-            FAQ
-          </Link>
         </div>
 
         {/* Theme + Popover - Large Screen */}
@@ -286,24 +246,13 @@ const Navbar = () => {
                         className={`flex flex-col gap-y-2 font-medium  hover:bg-slate-50 dark:hover:bg-white/10 dark:hover:bg-darkgrey hover:text-hovercta dark:hover:text-cta text-lg py-2 px-5 rounded  w-full transition-all`}
                       >
                         <p className="text-center">{dbUser?.name}</p>
-                        <p className="text-center">@{dbUser?.username}</p>
                       </Link>
 
                       <hr />
                     </>
                   )}
 
-                  {dbUser && (
-                    <>
-                      <div className="flex py-2 px-3 font-medium justify-between">
-                        <p className="pl-3 text-center">Credits</p>
-                        <p className="text-center text-black/70 dark:text-white/75">
-                          {dbUser?.dailyCredit + dbUser?.bonusCredit}
-                        </p>
-                      </div>
-                      <hr />
-                    </>
-                  )}
+                  
 
                   {/* Edit Profile */}
                   {dbUser && (
@@ -429,24 +378,13 @@ const Navbar = () => {
                       className={`flex flex-col gap-y-2 font-medium   hover:bg-slate-50 dark:hover:bg-white/10 dark:hover:bg-darkgrey hover:text-hovercta dark:hover:text-cta text-lg py-2 px-5 rounded  w-full transition-all`}
                     >
                       <p className="text-center">{dbUser?.name}</p>
-                      <p className="text-center">@{dbUser?.username}</p>
                     </Link>
 
                     <hr />
                   </>
                 )}
 
-                {dbUser && (
-                  <>
-                    <div className="flex py-2 px-3 font-medium justify-between">
-                      <p className="pl-3 text-center">Credits</p>
-                      <p className="text-center text-black/70 dark:text-white/75">
-                        {dbUser?.dailyCredit + dbUser?.bonusCredit}
-                      </p>
-                    </div>
-                    <hr />
-                  </>
-                )}
+               
 
                 {/* Edit Profile */}
                 {dbUser && (
@@ -554,13 +492,13 @@ const Navbar = () => {
             >
               <img
                 src={
-                  "https://res.cloudinary.com/do8rpl9l4/image/upload/v1736427090/quiz_imfkoz.png"
+                  "https://res.cloudinary.com/dvwdsxirc/image/upload/v1768573368/logo_ykew3c.png"
                 }
-                alt="Quizzer AI"
+                alt="Safezone"
                 className="h-10 pointer-events-none"
               />
               <p className="font-black dark:text-darkmodetext  bg-gradient-to-t text-transparent tracking-wider bg-clip-text from-cta to-hovercta text-4xl">
-                Quizzer AI
+                Safezone
               </p>
             </button>
             <RxCross2
@@ -584,57 +522,21 @@ const Navbar = () => {
             {dbUser ? (
               <>
                 <button
-                  onClick={() => handleSearch("/notes")}
+                  onClick={() => handleSearch("/attendance")}
                   className="hover:text-cta dark:hover-darkmodeCTA w-fit cursor-pointer transition-all"
                   tabIndex={0}
-                  aria-label="Notes"
+                  aria-label="Attendance"
                 >
-                  Notes
+                  Attendance
                 </button>
                 <button
-                  onClick={() => handleSearch("/files")}
+                  onClick={() => handleSearch("/profile")}
                   className="hover:text-cta dark:hover-darkmodeCTA w-fit cursor-pointer transition-all"
                   tabIndex={0}
-                  aria-label="Files"
+                  aria-label="Timetable"
                 >
-                  Files
+                  Timetable
                 </button>
-                {/* Pop-out menu to display quiz links */}
-                <NavigationMenu>
-                  <NavigationMenuList>
-                    <NavigationMenuItem>
-                      <NavigationMenuTrigger className="text-3xl font-semibold ">
-                        Quizzes
-                      </NavigationMenuTrigger>
-                      <NavigationMenuContent className="p-2 px-4">
-                        <ListItem
-                          onClick={() => setOpen(false)}
-                          to="/quizzes"
-                          title="Your Quizzes"
-                          className="!text-2xl font-semibold text-center hover:text-cta dark:hover:text-darkmodeCTA transition-all"
-                        ></ListItem>
-                        <ListItem
-                          onClick={() => setOpen(false)}
-                          to="/flashcard"
-                          title="FlashCard"
-                          className="!text-2xl font-semibold text-center hover:text-cta dark:hover:text-darkmodeCTA transition-all"
-                        ></ListItem>
-                        <ListItem
-                          onClick={() => setOpen(false)}
-                          to="/mcq"
-                          title="MCQ"
-                          className="!text-2xl font-semibold text-center hover:text-cta dark:hover:text-darkmodeCTA transition-all"
-                        ></ListItem>
-                        <ListItem
-                          onClick={() => setOpen(false)}
-                          to="/fact-or-not"
-                          title="Fact or Not"
-                          className="!text-2xl font-semibold text-center hover:text-cta dark:hover:text-darkmodeCTA transition-all"
-                        ></ListItem>
-                      </NavigationMenuContent>
-                    </NavigationMenuItem>
-                  </NavigationMenuList>
-                </NavigationMenu>
                 <button
                   onClick={() => handleSearch("/signout")}
                   className="hover:text-cta dark:hover-darkmodeCTA w-fit cursor-pointer transition-all"
@@ -664,15 +566,6 @@ const Navbar = () => {
                 </button>
               </>
             )}
-
-            <button
-              onClick={() => handleSearch("/faq")}
-              className="hover:text-cta dark:hover-darkmodeCTA w-fit cursor-pointer transition-all"
-              tabIndex={0}
-              aria-label="FAQ Page"
-            >
-              FAQ
-            </button>
           </div>
 
           {/* Footer Text   */}

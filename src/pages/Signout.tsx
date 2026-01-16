@@ -18,7 +18,7 @@ const Signout = () => {
 
   // Set window title.
   useEffect(() => {
-    document.title = "Sign out | Quizzer AI";
+    document.title = "Sign out | Safezone";
   }, []);
 
   const handleLogout = () => {

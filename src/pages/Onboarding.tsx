@@ -54,7 +54,7 @@ const Onboarding = () => {
 
   // Set window title.
   useEffect(() => {
-    document.title = "Onboarding | Quizzer AI";
+    document.title = "Onboarding | Safezone";
   }, []);
 
   // To set default values.

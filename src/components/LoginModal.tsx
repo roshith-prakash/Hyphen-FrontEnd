@@ -164,7 +164,7 @@ const LoginModal = ({
     >
       {/* Title */}
       <h1 className="dark:text-darkmodetext pt-5 font-bold text-xl text-center">
-        Sign in to Quizzer AI
+        Sign in to Safezone
       </h1>
 
       {/* Subtitle */}

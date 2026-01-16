@@ -9,6 +9,9 @@ import {
   EditProfile,
   NotFound,
   Home,
+  TimetableUpload,
+  Attendance,
+  EditTimetable,
 } from "./pages/index";
 import { useQuery } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -107,6 +110,35 @@ function App() {
                     </Protector>
                   }
                 />
+
+                {/* Timetable Upload */}
+                <Route
+                  path="/timetable"
+                  element={
+                    <Protector>
+                      <TimetableUpload />
+                    </Protector>
+                  }
+                />
+                <Route
+                  path="/edit-timetable"
+                  element={
+                    <Protector>
+                      <EditTimetable />
+                    </Protector>
+                  }
+                />
+
+                {/* Attendance */}
+                <Route
+                  path="/attendance"
+                  element={
+                    <Protector>
+                      <Attendance />
+                    </Protector>
+                  }
+                />
+
                 {/* 404 error page */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

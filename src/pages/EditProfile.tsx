@@ -50,7 +50,7 @@ const EditProfile = () => {
 
   // Set window title.
   useEffect(() => {
-    document.title = `Edit Profile | Quizzer AI`;
+    document.title = `Edit Profile | Safezone`;
   }, []);
 
   // To set default values.

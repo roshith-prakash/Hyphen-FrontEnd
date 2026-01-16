@@ -12,7 +12,7 @@ const NotFound = () => {
 
   //   Title
   useEffect(() => {
-    document.title = `Not Found | Quizzer AI`;
+    document.title = `Not Found | Safezone`;
   }, []);
 
   return (

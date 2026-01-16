@@ -8,6 +8,9 @@ import Signup from "./Signup";
 import Profile from "./Profile";
 import NotFound from "./NotFound";
 import Home from "./Home";
+import TimetableUpload from "./TimetableUpload";
+import Attendance from "./Attendance";
+import EditTimetable from "./EditTimetable";
 
 export {
     AuthAction,
@@ -19,5 +22,8 @@ export {
     Signup,
     Profile,
     NotFound,
-    Home
+    Home,
+    TimetableUpload,
+    Attendance,
+    EditTimetable
 }

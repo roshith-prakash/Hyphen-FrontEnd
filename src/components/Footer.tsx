@@ -19,17 +19,17 @@ const Footer = () => {
           <div className="flex flex-col items-center md:items-start">
             <div className="flex items-center gap-3 mb-4">
               <img
-                src="https://res.cloudinary.com/do8rpl9l4/image/upload/v1736427090/quiz_imfkoz.png"
-                alt="Quizzer AI"
+                src="https://res.cloudinary.com/dvwdsxirc/image/upload/v1768573368/logo_ykew3c.png"
+                alt="Safezone"
                 className="h-16 w-16 object-contain"
               />
               <h2 className="text-5xl font-bold font-title tracking-wider">
-                Quizzer AI
+                Safezone
               </h2>
             </div>
             <div className="text-center md:text-left">
               <p className="text-lg text-darkmodetext/80">
-                Give Quizzer a topic and he'll quiz you as best as he can!
+                Seamless attendance tracking and timetable management for students.
               </p>
             </div>
             <div className="flex mt-8 space-x-4">
@@ -78,78 +78,26 @@ const Footer = () => {
             </div>
           )}
 
-          {/* Quiz Types Column */}
           {dbUser && (
             <div>
               <h3 className="text-2xl font-semibold mb-4 text-center md:text-left">
-                Quiz Types
+                Features
               </h3>
               <ul className="space-y-2 text-center md:text-left">
                 <li>
                   <Link
-                    to="/flashcard"
+                    to="/attendance"
                     className="text-darkmodetext/80 hover:text-white transition-colors"
                   >
-                    FlashCard Quiz
+                    Attendance Tracking
                   </Link>
                 </li>
                 <li>
                   <Link
-                    to="/mcq"
+                    to="/profile"
                     className="text-darkmodetext/80 hover:text-white transition-colors"
                   >
-                    Multiple Choice Quiz
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/fact-or-not"
-                    className="text-darkmodetext/80 hover:text-white transition-colors"
-                  >
-                    Fact or Not
-                  </Link>
-                </li>
-                {/* <li>
-                <Link
-                  to="/multiplayer"
-                  className="text-darkmodetext/80 hover:text-white transition-colors"
-                >
-                  Multiplayer Quiz
-                </Link>
-              </li> */}
-              </ul>
-            </div>
-          )}
-
-          {/*Notes + Files + Quizzes*/}
-          {dbUser && (
-            <div>
-              <h3 className="text-2xl font-semibold mb-4 text-center md:text-left">
-                Learning Hub
-              </h3>
-              <ul className="space-y-2 text-center md:text-left">
-                <li>
-                  <Link
-                    to="/files"
-                    className="text-darkmodetext/80 hover:text-white transition-colors"
-                  >
-                    Your Files
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/notes"
-                    className="text-darkmodetext/80 hover:text-white transition-colors"
-                  >
-                    Your Notes
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/quizzes"
-                    className="text-darkmodetext/80 hover:text-white transition-colors"
-                  >
-                    Your Quizzes
+                    Timetable Management
                   </Link>
                 </li>
               </ul>
@@ -185,7 +133,7 @@ const Footer = () => {
 
         {/* Copyright */}
         <div className="border-t border-darkmodetext/10 mt-8 pt-8 text-center text-darkmodetext/60 text-sm">
-          <p>© {currentYear} Quizzer AI. All rights reserved.</p>
+          <p>© {currentYear} Safezone. All rights reserved.</p>
         </div>
       </div>
     </footer>
