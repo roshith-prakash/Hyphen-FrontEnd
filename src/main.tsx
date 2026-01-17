@@ -10,7 +10,10 @@ import { AuthProvider } from "./context/AuthContext.tsx";
 //Creating the Queryclient instance
 const client = new QueryClient();
 
-ReactDOM.createRoot(document.getElementById("root")).render(
+const rootElement = document.getElementById("root");
+if (!rootElement) throw new Error("Root element not found");
+
+ReactDOM.createRoot(rootElement).render(
   <StrictMode>
     {/* The query client provider that provides the client for child components. */}
     <QueryClientProvider client={client}>

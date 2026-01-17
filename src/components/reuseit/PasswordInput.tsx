@@ -1,4 +1,5 @@
-import { InputHTMLAttributes, useState } from "react";
+import { useState } from "react";
+import type { InputHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 import { FaEye, FaEyeSlash } from "react-icons/fa6";
 

@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
-import { useEffect, useState, MouseEvent, ReactNode } from "react";
+import { useEffect, useState } from "react";
+import type { MouseEvent, ReactNode } from "react";
 
 const Modal = ({
   isOpen,

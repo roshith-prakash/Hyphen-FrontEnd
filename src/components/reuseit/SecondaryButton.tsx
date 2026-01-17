@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { MouseEventHandler, ReactNode } from "react";
+import type { MouseEventHandler, ReactNode } from "react";
 
 const SecondaryButton = ({
   text,

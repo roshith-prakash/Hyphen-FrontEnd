@@ -460,7 +460,7 @@ export default function Attendance() {
         },
       });
 
-      const { results, reportInfo } = response.data;
+      const { results } = response.data;
 
       // Show success message
       toast.success(
