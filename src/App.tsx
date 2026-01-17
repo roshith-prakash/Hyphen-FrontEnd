@@ -12,6 +12,7 @@ import {
   TimetableUpload,
   Attendance,
   EditTimetable,
+  Dashboard,
 } from "./pages/index";
 import { useQuery } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -135,6 +136,16 @@ function App() {
                   element={
                     <Protector>
                       <Attendance />
+                    </Protector>
+                  }
+                />
+
+                {/* Dashboard */}
+                <Route
+                  path="/dashboard"
+                  element={
+                    <Protector>
+                      <Dashboard />
                     </Protector>
                   }
                 />

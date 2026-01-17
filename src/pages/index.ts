@@ -11,6 +11,7 @@ import Home from "./Home";
 import TimetableUpload from "./TimetableUpload";
 import Attendance from "./Attendance";
 import EditTimetable from "./EditTimetable";
+import Dashboard from "./Dashboard";
 
 export {
     AuthAction,
@@ -25,5 +26,6 @@ export {
     Home,
     TimetableUpload,
     Attendance,
-    EditTimetable
+    EditTimetable,
+    Dashboard
 }

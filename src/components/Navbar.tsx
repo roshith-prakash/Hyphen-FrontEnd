@@ -173,6 +173,12 @@ const Navbar = () => {
                 Attendance
               </Link>
               <Link
+                to="/dashboard"
+                className="hover:text-cta dark:hover:text-darkmodeCTA transition-all"
+              >
+                Dashboard
+              </Link>
+              <Link
                 to="/profile"
                 className="hover:text-cta dark:hover:text-darkmodeCTA transition-all"
               >
@@ -528,6 +534,14 @@ const Navbar = () => {
                   aria-label="Attendance"
                 >
                   Attendance
+                </button>
+                <button
+                  onClick={() => handleSearch("/dashboard")}
+                  className="hover:text-cta dark:hover-darkmodeCTA w-fit cursor-pointer transition-all"
+                  tabIndex={0}
+                  aria-label="Dashboard"
+                >
+                  Dashboard
                 </button>
                 <button
                   onClick={() => handleSearch("/profile")}
