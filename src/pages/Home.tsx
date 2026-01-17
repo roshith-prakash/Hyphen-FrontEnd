@@ -36,15 +36,7 @@ interface DaySchedule {
   slots: TimeSlot[];
 }
 
-interface Subject {
-  id: string;
-  name: string;
-  type: string;
-  classesPerWeek: number;
-  totalExpected: number;
-  attended: number;
-  totalHeld: number;
-}
+import type { Subject } from "./Dashboard";
 
 interface Timetable {
   id: string;

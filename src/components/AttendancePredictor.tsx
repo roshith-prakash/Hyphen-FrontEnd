@@ -2,15 +2,7 @@ import { useState } from "react";
 import { calculatePrediction, calculateOverallPrediction } from "../utils/predictions";
 import PredictionCard from "./PredictionCard";
 import StatusIndicator from "./StatusIndicator";
-
-interface Subject {
-  id: string;
-  name: string;
-  type: string;
-  classesPerWeek: number;
-  attended: number;
-  totalHeld: number;
-}
+import type { Subject } from "../pages/Dashboard";
 
 interface AttendancePredictorProps {
   subjects: Subject[];

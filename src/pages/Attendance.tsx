@@ -31,16 +31,7 @@ interface DaySchedule {
   slots: TimeSlot[];
 }
 
-interface Subject {
-  id: string;
-  name: string;
-  type: string;
-  classesPerWeek: number;
-  totalExpected: number;
-  weight: number; // Weight multiplier (Lab=2.0, Lecture=1.0)
-  attended: number; // Weighted attended count
-  totalHeld: number; // Weighted total held count
-}
+import type { Subject } from "./Dashboard";
 
 interface Timetable {
   id: string;

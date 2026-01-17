@@ -5,7 +5,8 @@ import { useNavigate } from "react-router-dom";
 import { toast, Toaster } from "react-hot-toast";
 import { sendEmailVerification } from "firebase/auth";
 import { auth } from "../firebase/firebase";
-import { ReactNode, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { PacmanLoader } from "react-spinners";
 
 const Protector = ({ children }: { children: ReactNode }) => {
