@@ -29,6 +29,7 @@ export interface Subject {
   id: string;
   name: string;
   type: string;
+  weight: number;
   attended: number;
   totalHeld: number;
   classesPerWeek: number;
@@ -109,29 +110,31 @@ export default function Dashboard() {
   ];
 
   // Bar chart data per subject
-  const subjectBarData = timetable?.subjects?.map((s) => ({
-    name: s.name.length > 12 ? s.name.substring(0, 12) + "..." : s.name,
-    fullName: s.name,
-    percentage: s.totalHeld > 0 ? Math.round((s.attended / s.totalHeld) * 100) : 0,
-    attended: s.attended,
-    total: s.totalHeld,
-  })) || [];
+  const subjectBarData = timetable?.subjects
+    ?.filter((s) => s.totalHeld > 0)
+    ?.map((s) => ({
+      name: s.name.length > 12 ? s.name.substring(0, 12) + "..." : s.name,
+      fullName: s.name,
+      percentage: s.totalHeld > 0 ? Math.round((s.attended / s.totalHeld) * 100) : 0,
+      attended: s.attended,
+      total: s.totalHeld,
+    })) || [];
 
   const trendData = (() => {
     const days: { date: string; label: string; present: number; absent: number; total: number; percentage: number | null }[] = [];
-    
+
     for (let i = 13; i >= 0; i--) {
       const date = dayjs().subtract(i, "day");
       const dateStr = date.format("YYYY-MM-DD");
       const dayRecords = allRecords.filter(
         (r) => dayjs(r.date).format("YYYY-MM-DD") === dateStr && r.status !== "not-conducted"
       );
-      
+
       const present = dayRecords.filter((r) => r.status === "present").length;
       const absent = dayRecords.filter((r) => r.status === "absent").length;
       const total = present + absent;
       const percentage = total > 0 ? Math.round((present / total) * 100) : null;
-      
+
       days.push({
         date: dateStr,
         label: date.format("MMM D"),
@@ -141,7 +144,7 @@ export default function Dashboard() {
         percentage,
       });
     }
-    
+
     return days;
   })();
 
@@ -149,7 +152,7 @@ export default function Dashboard() {
   const cumulativeTrend = (() => {
     let runningPresent = 0;
     let runningTotal = 0;
-    
+
     return trendData.map((d) => {
       runningPresent += d.present;
       runningTotal += d.total;
@@ -252,14 +255,14 @@ export default function Dashboard() {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#27272a" opacity={0.3} />
-                  <XAxis 
-                    dataKey="label" 
-                    tick={{ fill: "#71717a", fontSize: 10 }} 
+                  <XAxis
+                    dataKey="label"
+                    tick={{ fill: "#71717a", fontSize: 10 }}
                     axisLine={{ stroke: "#27272a" }}
                   />
-                  <YAxis 
-                    domain={[0, 100]} 
-                    tick={{ fill: "#71717a", fontSize: 10 }} 
+                  <YAxis
+                    domain={[0, 100]}
+                    tick={{ fill: "#71717a", fontSize: 10 }}
                     axisLine={{ stroke: "#27272a" }}
                     tickFormatter={(v) => `${v}%`}
                   />
@@ -336,23 +339,23 @@ export default function Dashboard() {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={subjectBarData} layout="vertical">
                 {/* Safezone background */}
-                <ReferenceArea 
-                  x1={timetable.minAttendance} 
-                  x2={100} 
-                  fill="#10b981" 
+                <ReferenceArea
+                  x1={timetable.minAttendance}
+                  x2={100}
+                  fill="#10b981"
                   fillOpacity={0.1}
                 />
                 <CartesianGrid strokeDasharray="3 3" stroke="#27272a" opacity={0.3} />
-                <XAxis 
-                  type="number" 
-                  domain={[0, 100]} 
+                <XAxis
+                  type="number"
+                  domain={[0, 100]}
                   tick={{ fill: "#71717a", fontSize: 10 }}
                   axisLine={{ stroke: "#27272a" }}
                   tickFormatter={(v) => `${v}%`}
                 />
-                <YAxis 
-                  type="category" 
-                  dataKey="name" 
+                <YAxis
+                  type="category"
+                  dataKey="name"
                   tick={{ fill: "#71717a", fontSize: 11 }}
                   axisLine={{ stroke: "#27272a" }}
                   width={100}
@@ -370,9 +373,9 @@ export default function Dashboard() {
                   ]}
                 />
                 <Legend />
-                <Bar 
-                  dataKey="percentage" 
-                  fill="#10b981" 
+                <Bar
+                  dataKey="percentage"
+                  fill="#10b981"
                   radius={[0, 4, 4, 0]}
                   name="Attendance %"
                 />
@@ -391,12 +394,12 @@ export default function Dashboard() {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={trendData.filter(d => d.percentage !== null)}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#27272a" opacity={0.3} />
-                <XAxis 
-                  dataKey="label" 
+                <XAxis
+                  dataKey="label"
                   tick={{ fill: "#71717a", fontSize: 10 }}
                   axisLine={{ stroke: "#27272a" }}
                 />
-                <YAxis 
+                <YAxis
                   domain={[0, 100]}
                   tick={{ fill: "#71717a", fontSize: 10 }}
                   axisLine={{ stroke: "#27272a" }}
@@ -414,9 +417,9 @@ export default function Dashboard() {
                     "Attendance",
                   ]}
                 />
-                <Bar 
-                  dataKey="percentage" 
-                  fill="#10b981" 
+                <Bar
+                  dataKey="percentage"
+                  fill="#10b981"
                   radius={[4, 4, 0, 0]}
                   name="Attendance %"
                 />
