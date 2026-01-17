@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../utils/axios";
 import { useDBUser } from "../context/UserContext";
 import { SyncLoader } from "react-spinners";
-import { FiCheck, FiX, FiMinus, FiPlus, FiArrowLeft, FiClock, FiCalendar } from "react-icons/fi";
+import { FiCheck, FiX, FiMinus, FiPlus, FiArrowLeft, FiClock, FiCalendar, FiUpload } from "react-icons/fi";
 import toast from "react-hot-toast";
 import dayjs from "dayjs";
 
@@ -98,6 +98,10 @@ export default function Attendance() {
     status: "present" as "present" | "absent" | "not-conducted",
   });
 
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploadingReport, setUploadingReport] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<string>("");
+
   // No longer needed, using dayjs() for 'now' in logic
   /*
   useEffect(() => {
@@ -125,58 +129,56 @@ export default function Attendance() {
   // No helper needed, using dayjs directly in effects
 
   // Fetch timetable and today's attendance
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!dbUser?.id) {
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        setIsLoading(true);
-        setInitialRecordsLoaded(false);
-        // Fetch timetable if not already fetched
-        if (!timetable) {
-          const timetableRes = await axiosInstance.post("/timetable", {
-            userId: dbUser.id,
-          });
-          console.log("Subjects in timetable:", timetableRes.data.timetable?.subjects);
-          console.log("Full subject details:");
-          timetableRes.data.timetable?.subjects?.forEach((s: any) => {
-            console.log(`  ${s.name} (${s.type}): ${s.attended}/${s.totalHeld} = ${Math.round((s.attended / s.totalHeld) * 100) || 0}%`);
-          });
-          setTimetable(timetableRes.data.timetable);
-          setSubjects(timetableRes.data.timetable?.subjects || []);
-        }
-
-        // Fetch attendance for selectedDate from database
-        const attendanceRes = await axiosInstance.post("/attendance/date", {
-          userId: dbUser.id,
-          date: selectedDate.startOf("day").toISOString(),
-        });
-
-        // Build marked classes map from database records
-        const records: DailyAttendanceRecord[] = attendanceRes.data.records || [];
-        const markedMap: Record<string, "present" | "absent"> = {};
-
-        for (const record of records) {
-          const slotKey = `${record.timeStart}_${record.subjectName}_${record.subjectType}`;
-          markedMap[slotKey] = record.status as "present" | "absent";
-        }
-
-        setMarkedClasses(markedMap);
-        setInitialRecordsLoaded(true);
-      } catch (err) {
-        console.error("Error fetching data:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (dbUser?.id) {
-      fetchData();
+  const fetchData = async () => {
+    if (!dbUser?.id) {
+      setIsLoading(false);
+      return;
     }
-  }, [dbUser?.id, selectedDate]);
+
+    try {
+      setIsLoading(true);
+      setInitialRecordsLoaded(false);
+      // Fetch timetable if not already fetched
+      if (!timetable) {
+        const timetableRes = await axiosInstance.post("/timetable", {
+          userId: dbUser.id,
+        });
+        console.log("Subjects in timetable:", timetableRes.data.timetable?.subjects);
+        console.log("Full subject details:");
+        timetableRes.data.timetable?.subjects?.forEach((s: any) => {
+          console.log(`  ${s.name} (${s.type}): ${s.attended}/${s.totalHeld} = ${Math.round((s.attended / s.totalHeld) * 100) || 0}%`);
+        });
+        setTimetable(timetableRes.data.timetable);
+        setSubjects(timetableRes.data.timetable?.subjects || []);
+      }
+
+      // Fetch attendance for selectedDate from database
+      const attendanceRes = await axiosInstance.post("/attendance/date", {
+        userId: dbUser.id,
+        date: selectedDate.startOf("day").toISOString(),
+      });
+
+      // Build marked classes map from database records
+      const records: DailyAttendanceRecord[] = attendanceRes.data.records || [];
+      const markedMap: Record<string, "present" | "absent"> = {};
+
+      for (const record of records) {
+        const slotKey = `${record.timeStart}_${record.subjectName}_${record.subjectType}`;
+        markedMap[slotKey] = record.status as "present" | "absent";
+      }
+
+      setMarkedClasses(markedMap);
+      setInitialRecordsLoaded(true);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (dbUser) fetchData();
+  }, [dbUser, selectedDate]);
 
   // Auto-mark past classes as present (only if viewed date is today)
   useEffect(() => {
@@ -440,6 +442,59 @@ export default function Attendance() {
     });
   };
 
+  const handleReportUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !dbUser?.id) return;
+
+    if (!file.type.includes("pdf")) {
+      toast.error("Please upload a PDF file");
+      return;
+    }
+
+    try {
+      setUploadingReport(true);
+      setUploadProgress("Uploading PDF...");
+
+      // Send file directly to backend
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("userId", dbUser.id);
+
+      setUploadProgress("Processing report...");
+
+      // Send to backend for processing
+      const response = await axiosInstance.post("/attendance/upload-report", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      const { results, reportInfo } = response.data;
+
+      // Show success message
+      toast.success(
+        `Synced ${results.created} records! ${results.duplicates} duplicates skipped.`,
+        { duration: 5000 }
+      );
+      if (results.unmatched.length > 0) {
+        console.warn("Unmatched subjects:", results.unmatched);
+        toast.error(`Could not match ${results.unmatched.length} subjects`);
+      }
+
+      // Refresh data completely
+      setTimetable(null);
+      await fetchData();
+      setShowUploadModal(false);
+    } catch (err: any) {
+      console.error("Error uploading report:", err);
+      const errorMessage = err.response?.data?.details || err.response?.data?.error || "Failed to process report";
+      toast.error(errorMessage);
+    } finally {
+      setUploadingReport(false);
+      setUploadProgress("");
+    }
+  };
+
   // Calculate percentage
   const getPercentage = (attended: number, totalHeld: number): number => {
     if (totalHeld === 0) return 0;
@@ -557,13 +612,22 @@ export default function Attendance() {
               {selectedDate.format("MMM D")}
             </p>
           </div>
-          <button
-            onClick={() => setIsExtraModalOpen(true)}
-            className="ml-auto flex items-center gap-2 px-3 py-1.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity"
-          >
-            <FiPlus className="w-3.5 h-3.5" />
-            Extra Lecture
-          </button>
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              onClick={() => setShowUploadModal(true)}
+              className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-lg text-xs font-semibold hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+            >
+              <FiUpload className="w-3.5 h-3.5" />
+              Upload Report
+            </button>
+            <button
+              onClick={() => setIsExtraModalOpen(true)}
+              className="ml-auto flex items-center gap-2 px-3 py-1.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity"
+            >
+              <FiPlus className="w-3.5 h-3.5" />
+              Extra Lecture
+            </button>
+          </div>
         </div>
 
         {renderDateSelector()}
@@ -882,6 +946,56 @@ export default function Attendance() {
                     {isSaving ? "Adding..." : "Add Lecture"}
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Upload Report Modal */}
+        {showUploadModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6">
+            <div className="bg-white dark:bg-zinc-900 rounded-2xl max-w-md w-full p-6 border border-zinc-200 dark:border-zinc-800">
+              <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
+                Upload Attendance Report
+              </h3>
+
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
+                Upload your official attendance PDF report from ERP. The app will automatically
+                sync all records and match them to your timetable subjects.
+              </p>
+
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                  Select PDF Report
+                </label>
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  onChange={handleReportUpload}
+                  disabled={uploadingReport}
+                  className="w-full px-4 py-2 border border-zinc-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                />
+              </div>
+
+              {uploadingReport && (
+                <div className="mb-6 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <SyncLoader size={8} color="#71717a" />
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                      {uploadProgress}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setShowUploadModal(false)}
+                  disabled={uploadingReport}
+                  className="px-4 py-2 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
               </div>
             </div>
           </div>
