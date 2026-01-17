@@ -149,7 +149,7 @@ export default function EditTimetable() {
     }
   };
 
-  const handleEditInfoField = (field: "program" | "semester", value: string) => {
+  const handleEditInfoField = (field: "program" | "semester" | "effective_date", value: string) => {
     if (editedData) {
       setEditedData({ ...editedData, [field]: value });
     }
@@ -450,6 +450,23 @@ export default function EditTimetable() {
                     </p>
                   )}
                 </div>
+                <div>
+                  <label className="block text-xs text-zinc-400 dark:text-zinc-500 mb-1">
+                    Semester Start Date
+                  </label>
+                  {isEditingInfo ? (
+                    <input
+                      type="date"
+                      value={editedData.effective_date ? new Date(editedData.effective_date).toISOString().split('T')[0] : ""}
+                      onChange={(e) => handleEditInfoField("effective_date", e.target.value)}
+                      className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-zinc-100 text-sm focus:outline-none focus:border-zinc-400"
+                    />
+                  ) : (
+                    <p className="text-zinc-900 dark:text-zinc-100">
+                      {editedData.effective_date ? new Date(editedData.effective_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : "Not set"}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -458,7 +475,7 @@ export default function EditTimetable() {
               <h3 className="font-medium text-zinc-900 dark:text-zinc-100 mb-4">
                 Semester Settings
               </h3>
-              <div className="grid sm:grid-cols-4 gap-4">
+              <div className="grid sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs text-zinc-400 dark:text-zinc-500 mb-1">
                     Total Weeks
@@ -468,18 +485,6 @@ export default function EditTimetable() {
                     inputMode="numeric"
                     value={totalWeeks}
                     onChange={(e) => setTotalWeeks(e.target.value)}
-                    className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-zinc-100 text-sm focus:outline-none focus:border-zinc-400"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-zinc-400 dark:text-zinc-500 mb-1">
-                    Completed
-                  </label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={completedWeeks}
-                    onChange={(e) => setCompletedWeeks(e.target.value)}
                     className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-zinc-100 text-sm focus:outline-none focus:border-zinc-400"
                   />
                 </div>

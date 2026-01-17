@@ -43,6 +43,7 @@ function App() {
     >
       {/* Toaster for toasts */}
       <Toaster
+        position="bottom-right"
         toastOptions={{
           style: {
             background: isDarkMode ? "#333" : "#fff",

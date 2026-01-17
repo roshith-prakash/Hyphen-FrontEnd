@@ -7,6 +7,7 @@ import { toast } from "react-hot-toast";
 import dayjs from "dayjs";
 import { FiCalendar, FiClock, FiEdit2, FiTrash2, FiChevronDown, FiChevronUp } from "react-icons/fi";
 import { SyncLoader } from "react-spinners";
+import AttendancePredictor from "../components/AttendancePredictor";
 
 // Types
 interface TimeSlot {
@@ -141,6 +142,11 @@ const Profile = () => {
   const totalHeld = timetable?.subjects?.reduce((acc, sub) => acc + sub.totalHeld, 0) || 0;
   const totalPercentage = totalHeld > 0 ? Math.round((totalAttended / totalHeld) * 100) : 0;
   const isAtRisk = totalPercentage < (timetable?.minAttendance || 75);
+
+  // Calculate semester dates
+  const currentWeek = (timetable?.completedWeeks || 0) + 1;
+  const semesterStartDate = timetable?.effectiveDate ? dayjs(timetable.effectiveDate) : null;
+  const semesterEndDate = semesterStartDate && timetable ? semesterStartDate.add(timetable.totalWeeks, 'week') : null;
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 py-8 px-6">
@@ -294,40 +300,53 @@ const Profile = () => {
                      style={{ width: `${Math.min(100, totalPercentage)}%` }}
                    />
                 </div>
+                
+                {/* Compact Predictions */}
+                <div className="mt-3 pt-3 border-t border-zinc-200 dark:border-zinc-800">
+                  <AttendancePredictor
+                    subjects={timetable.subjects}
+                    timetable={{
+                      totalWeeks: timetable.totalWeeks,
+                      completedWeeks: timetable.completedWeeks,
+                      minAttendance: timetable.minAttendance,
+                    }}
+                    mode="compact"
+                  />
+                </div>
               </div>
 
               {/* Info Grid */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-3">
                   <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">
-                    Program
+                    Current Week
                   </p>
                   <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                    {timetable.program}
+                    Week {currentWeek} of {timetable.totalWeeks}
                   </p>
                 </div>
                 <div className="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-3">
                   <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">
-                    Semester
-                  </p>
-                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                    {timetable.semester}
-                  </p>
-                </div>
-                <div className="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-3">
-                  <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">
-                    Weeks
-                  </p>
-                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                    {timetable.completedWeeks} / {timetable.totalWeeks}
-                  </p>
-                </div>
-                <div className="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-3">
-                  <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">
-                    Required
+                    Goal
                   </p>
                   <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                     {timetable.minAttendance}%
+                  </p>
+                </div>
+                <div className="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-3">
+                  <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">
+                    Semester Start
+                  </p>
+                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                    {semesterStartDate ? semesterStartDate.format("MMM D, YYYY") : "Not set"}
+                  </p>
+                </div>
+                <div className="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-3">
+                  <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">
+                    Semester End
+                  </p>
+                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                    {semesterEndDate ? semesterEndDate.format("MMM D, YYYY") : "Not set"}
                   </p>
                 </div>
               </div>

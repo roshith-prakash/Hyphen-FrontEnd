@@ -3,8 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { axiosInstance } from "../utils/axios";
 import dayjs from "dayjs";
-import { FiArrowLeft, FiTrendingUp, FiPieChart, FiBarChart2 } from "react-icons/fi";
+import { FiArrowLeft, FiTrendingUp, FiPieChart, FiBarChart2, FiTarget } from "react-icons/fi";
 import { SyncLoader } from "react-spinners";
+import AttendancePredictor from "../components/AttendancePredictor";
+import RecoveryCalculator from "../components/RecoveryCalculator";
+import AIGuidancePanel from "../components/AIGuidancePanel";
 import {
   AreaChart,
   Area,
@@ -22,12 +25,13 @@ import {
   ReferenceArea,
 } from "recharts";
 
-interface Subject {
+export interface Subject {
   id: string;
   name: string;
   type: string;
   attended: number;
   totalHeld: number;
+  classesPerWeek: number;
 }
 
 interface DailyAttendanceRecord {
@@ -43,6 +47,8 @@ interface DailyAttendanceRecord {
 interface Timetable {
   id: string;
   minAttendance: number;
+  totalWeeks: number;
+  completedWeeks: number;
   subjects: Subject[];
 }
 
@@ -200,10 +206,13 @@ export default function Dashboard() {
               Analytics Dashboard
             </h1>
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              Visualize your attendance patterns and trends
+              Week {(timetable.completedWeeks || 0) + 1} of {timetable.totalWeeks} · Visualize your attendance patterns and trends
             </p>
           </div>
         </div>
+
+        {/* AI Guidance - Hero Section */}
+        <AIGuidancePanel userId={dbUser?.id} />
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -414,6 +423,32 @@ export default function Dashboard() {
               </BarChart>
             </ResponsiveContainer>
           </div>
+        </div>
+
+        {/* Recovery Calculator */}
+        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-5">
+          <RecoveryCalculator
+            subjects={timetable.subjects}
+            minAttendance={timetable.minAttendance}
+            remainingWeeks={timetable.totalWeeks - timetable.completedWeeks}
+          />
+        </div>
+
+        {/* Attendance Predictions */}
+        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <FiTarget className="w-4 h-4 text-zinc-400" />
+            <h3 className="font-medium text-zinc-900 dark:text-zinc-100">Attendance Predictions</h3>
+          </div>
+          <AttendancePredictor
+            subjects={timetable.subjects}
+            timetable={{
+              totalWeeks: timetable.totalWeeks,
+              completedWeeks: timetable.completedWeeks,
+              minAttendance: timetable.minAttendance,
+            }}
+            mode="detailed"
+          />
         </div>
       </div>
     </div>
