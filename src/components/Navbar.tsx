@@ -19,43 +19,36 @@ import { FaUserPlus } from "react-icons/fa6";
 import { PiSignOutFill } from "react-icons/pi";
 import Avatar from "./reuseit/Avatar";
 import AlertModal from "./reuseit/AlertModal";
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "./ui/navigation-menu";
-import { cn } from "@/lib/utils";
+// import {NavigationMenuLink} from "./ui/navigation-menu";
+// import { cn } from "@/lib/utils";
 
-const ListItem = ({
-  className,
-  title,
-  to,
-  onClick = () => {},
-  ...props
-}: {
-  className: string;
-  title: string;
-  to: string;
-  onClick?: () => void;
-}) => {
-  return (
-    <NavigationMenuLink onClick={onClick} asChild>
-      <Link
-        to={to}
-        className={cn(
-          "block w-full select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors  focus:bg-accent focus:text-accent-foreground font-medium text-nowrap",
-          className
-        )}
-        {...props}
-      >
-        {title}
-      </Link>
-    </NavigationMenuLink>
-  );
-};
+// const ListItem = ({
+//   className,
+//   title,
+//   to,
+//   onClick = () => {},
+//   ...props
+// }: {
+//   className: string;
+//   title: string;
+//   to: string;
+//   onClick?: () => void;
+// }) => {
+//   return (
+//     <NavigationMenuLink onClick={onClick} asChild>
+//       <Link
+//         to={to}
+//         className={cn(
+//           "block w-full select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors  focus:bg-accent focus:text-accent-foreground font-medium text-nowrap",
+//           className
+//         )}
+//         {...props}
+//       >
+//         {title}
+//       </Link>
+//     </NavigationMenuLink>
+//   );
+// };
 
 const Navbar = () => {
   const { isDarkMode, toggleDarkMode } = useDarkMode() as ContextValue;
